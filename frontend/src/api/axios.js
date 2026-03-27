@@ -1,7 +1,8 @@
-﻿import axios from 'axios'
+import axios from 'axios'
 
 const api = axios.create({
-    baseURL: 'https://localhost:5170', // <-- pakeisk į savo portą
+  baseURL: 'http://localhost:5170',
 })
 
 export default api
+
