@@ -5,6 +5,7 @@
     </div>
 
     <h2>Sukurti renginį</h2>
+    <p class="muted">Renginys bus priskirtas prisijungusiam vartotojui.</p>
 
     <form class="form" @submit.prevent="handleCreate">
       <label class="field">
@@ -22,11 +23,6 @@
         <textarea v-model="description" rows="5" />
       </label>
 
-      <label class="field">
-        <span>Savininko ID (OwnerId)</span>
-        <input v-model.number="ownerId" type="number" min="1" required />
-      </label>
-
       <div class="actions">
         <button class="primary" type="submit" :disabled="loading">
           {{ loading ? 'Kuriama...' : 'Sukurti' }}
@@ -39,7 +35,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/axios.js'
 
@@ -48,29 +44,42 @@ const router = useRouter()
 const title = ref('')
 const description = ref('')
 const location = ref('')
-const ownerId = ref(null)
 
 const loading = ref(false)
 const errorMessage = ref('')
 
+const currentUser = ref(null)
+const ownerId = computed(() => currentUser.value?.id ?? null)
+
 onMounted(() => {
-  // Jei ateityje login metu išsaugosit user'į, galėsim automatiškai užpildyti OwnerId.
-  // Kol kas - tiesiog bandome paimti `user.id` jei jis yra localStorage.
   try {
     const raw = localStorage.getItem('user')
-    if (!raw) return
-    const u = JSON.parse(raw)
-    if (u && typeof u.id === 'number') ownerId.value = u.id
+    currentUser.value = raw ? JSON.parse(raw) : null
   } catch {
-    // ignore
+    currentUser.value = null
+  }
+
+  if (!ownerId.value) {
+    errorMessage.value = 'Norint sukurti renginį, reikia prisijungti.'
+    // Paliekam puslapį, bet logiškiau nukreipti į login.
+    router.push('/login')
   }
 })
 
 const handleCreate = async () => {
   errorMessage.value = ''
+
+  if (!ownerId.value) {
+    errorMessage.value = 'Prisijunkite ir bandykite dar kartą.'
+    router.push('/login')
+    return
+  }
+
   loading.value = true
 
   try {
+    // POST http://localhost:5170/api/events
+    // Body atitinka backend CreateEventDto: Title, Description, Location, OwnerId.
     const res = await api.post('/api/events', {
       title: title.value.trim(),
       description: description.value.trim(),
@@ -78,7 +87,6 @@ const handleCreate = async () => {
       ownerId: ownerId.value,
     })
 
-    // res.data = sukurtas Event. Nukreipiam į detalę.
     router.push(`/events/${res.data?.id ?? ''}`)
   } catch (err) {
     const msg = err?.response?.data || err?.message || 'Nepavyko sukurti renginio.'
@@ -104,17 +112,26 @@ const handleCreate = async () => {
 .back {
   color: var(--text-h);
   text-decoration: none;
-  background: var(--social-bg);
+  background: var(--surface-2);
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: 12px;
   display: inline-flex;
+  border: 1px solid var(--outline-soft);
+}
+
+.muted {
+  color: var(--text);
+  opacity: 0.85;
+  margin: 0 0 10px;
 }
 
 .form {
-  margin-top: 16px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  margin-top: 14px;
+  border: 1px solid var(--outline-soft);
+  border-radius: 16px;
   padding: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .field {
@@ -125,16 +142,7 @@ const handleCreate = async () => {
 
 .field span {
   color: var(--text-h);
-  font-weight: 600;
-}
-
-input,
-textarea {
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text-h);
+  font-weight: 650;
 }
 
 .actions {
@@ -144,21 +152,21 @@ textarea {
 }
 
 .primary {
-  border: 1px solid var(--accent-border);
-  background: var(--accent-bg);
+  border: 1px solid var(--outline);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
   color: var(--text-h);
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 14px;
+  padding: 10px 14px;
   cursor: pointer;
 }
 
 .primary:hover {
-  box-shadow: var(--shadow);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--outline) 35%, transparent);
 }
 
 .error {
   margin-top: 12px;
-  color: #b00020;
+  color: var(--danger);
 }
 </style>
 
