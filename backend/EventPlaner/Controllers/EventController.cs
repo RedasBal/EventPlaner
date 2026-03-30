@@ -49,14 +49,21 @@ public class EventController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public IActionResult DeleteEvent(int id)
+    public IActionResult DeleteEvent(int id, [FromQuery] int userId)
     {
-        var deleted = _events.DeleteEvent(id);
-        if (!deleted)
+        try
         {
-            return NotFound("Event not found");
+            var deleted = _events.DeleteEvent(id, userId);
+            if (!deleted)
+            {
+                return NotFound("Event not found");
+            }
+            return Ok("Event deleted");
         }
-        return Ok("Event deleted");
+        catch (UnauthorizedAccessException e)
+        {
+            return StatusCode(403, e.Message);
+        }
     }
 
     [HttpPut("{id}")]
@@ -75,5 +82,43 @@ public class EventController : ControllerBase
         }
         return Ok(updatedEvent);
     }
-}
 
+    [HttpPost("{id}/join")]
+    public IActionResult JoinEvent(int id, [FromQuery] int userId)
+    {
+        try
+        {
+            _events.JoinEvent(id, userId);
+            return Ok("Event joined");
+        }
+        catch(Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
+    [HttpPost("{id}/leave")]
+    public IActionResult LeaveEvent(int id, [FromQuery] int userId)
+    {
+        try
+        {
+            _events.LeaveEvent(id, userId);
+            return Ok("Event leaved");
+        }
+        catch(Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
+    [HttpGet("{id}/participants")]
+    public IActionResult GetParticipants(int id)
+    {
+        var participants = _events.GetParticipants(id);
+        if (participants == null)
+        {
+            return NotFound("Event not found");
+        }
+        return Ok(participants);
+    }
+}

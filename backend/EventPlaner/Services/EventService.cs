@@ -1,3 +1,4 @@
+using EventPlaner.DT0s;
 using EventPlaner.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,17 +36,47 @@ public class EventService
    {
       _db.Events.Add(ev);
       _db.SaveChanges();
-      return ev;
+
+      // Owner automatically becomes a participant (requirement).
+      var alreadyParticipant = _db.EventParticipants.Any(ep =>
+         ep.EventId == ev.Id && ep.UserId == ev.OwnerId);
+      if (!alreadyParticipant)
+      {
+         _db.EventParticipants.Add(new EventParticipant
+         {
+            EventId = ev.Id,
+            UserId = ev.OwnerId,
+            Status = ParticipantStatus.Going
+         });
+         _db.SaveChanges();
+      }
+
+      // Return with navigation properties populated.
+      return GetAllEventById(ev.Id) ?? ev;
    }
 
-   public bool DeleteEvent(int id)
+   public bool DeleteEvent(int id, int userId)
    {
-      var ev = _db.Events.FirstOrDefault(delegate(Event ev)
-      {
-         return ev.Id == id;
-      });
+      var ev = _db.Events
+         .Include(e => e.Participants)
+         .FirstOrDefault(delegate(Event ev)
+         {
+            return ev.Id == id;
+         });
       if (ev == null)
          return false;
+
+      if (ev.OwnerId != userId)
+      {
+         throw new UnauthorizedAccessException("Only owner can delete this event");
+      }
+
+      // Be explicit: remove participants first to avoid FK issues on some providers.
+      if (ev.Participants.Count > 0)
+      {
+         _db.EventParticipants.RemoveRange(ev.Participants);
+      }
+
       _db.Events.Remove(ev);
       _db.SaveChanges();
       return true;
@@ -70,5 +101,71 @@ public class EventService
       _db.SaveChanges();
       return existingEvent;
    }
-}
 
+   public void JoinEvent(int eventId, int userId)
+   {
+      var ev= _db.Events.Find(eventId);
+      if(ev == null)
+      {
+         throw new Exception("Event not found");
+      }
+
+      if (userId == ev.OwnerId)
+      {
+         throw new Exception("You cannot join this event");
+      }
+
+      var existing = _db.EventParticipants.FirstOrDefault(delegate(EventParticipant ep)
+      {
+         return ep.EventId == eventId && ep.UserId == userId;
+      });
+      if (existing != null)
+      {
+         throw new Exception("Already joined");
+      }
+
+      EventParticipant ep = new EventParticipant();
+      ep.EventId = eventId;
+      ep.UserId = userId;
+      _db.EventParticipants.Add(ep);
+      _db.SaveChanges();
+   }
+
+   public void LeaveEvent(int eventId, int userId)
+   {
+      var participant = _db.EventParticipants.FirstOrDefault(delegate(EventParticipant ep)
+      {
+         return ep.EventId == eventId && ep.UserId == userId;
+      });
+      if (participant == null)
+      {
+         throw new Exception("Event not found");
+      }
+      _db.EventParticipants.Remove(participant);
+      _db.SaveChanges();
+   }
+
+   public List<ParticipantResponseDto>? GetParticipants(int eventId)
+   {
+      var exists = _db.Events.AsNoTracking().Any(e => e.Id == eventId);
+      if (!exists) return null;
+
+      return _db.EventParticipants
+         .AsNoTracking()
+         .Where(ep => ep.EventId == eventId)
+         .Include(ep => ep.User)
+         .Select(ep => new ParticipantResponseDto
+         {
+            UserId = ep.UserId,
+            Username = ep.User.Username,
+            Email = ep.User.Email,
+            Status = ep.Status
+         })
+         .ToList();
+   }
+
+   // Backwards-compatible aliases (typos happen).
+   public List<ParticipantResponseDto>? GetParticipant(int eventId) => GetParticipants(eventId);
+   public List<ParticipantResponseDto>? GetParicipant(int eventId) => GetParticipants(eventId);
+   public List<ParticipantResponseDto>? GetParicipants(int eventId) => GetParticipants(eventId);
+}
