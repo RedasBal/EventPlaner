@@ -19,29 +19,47 @@ public class UserController : ControllerBase
     [HttpPost("login")]
     public IActionResult Login([FromBody] UserLoginDto request)
     {
-        User? user = _users.Login(request.Email, request.PasswordHash);
+        var password = !string.IsNullOrWhiteSpace(request?.Password)
+            ? request.Password
+            : request?.PasswordHash ?? string.Empty;
+
+        if (request == null ||
+            string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(password))
+        {
+            return BadRequest("Neteisingi duomenys");
+        }
+
+        User? user = _users.Login(request.Email, password);
         if (user == null)
         {
             return Unauthorized("Neteisingi duomenys");
         }
-        return Ok(user);
+        return Ok(UserMapper.Map(user));
     }
 
     [HttpPost("register")]
     public IActionResult Register([FromBody] UserRegisterDto request)
     {
-        if (request == null || string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.PasswordHash))
+        var password = !string.IsNullOrWhiteSpace(request?.Password)
+            ? request.Password
+            : request?.PasswordHash ?? string.Empty;
+
+        if (request == null ||
+            string.IsNullOrWhiteSpace(request.Username) ||
+            string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(password))
         {
             return BadRequest("Neteisingi duomenys");
         }
 
-        User? user = _users.Register(request.Username, request.Email, request.PasswordHash);
+        User? user = _users.Register(request.Username, request.Email, password);
         if (user == null)
         {
             return Unauthorized("Vartotojas toks jau yra");
 
         }
-        return Ok(user);
+        return Ok(UserMapper.Map(user));
     }
 
 }
