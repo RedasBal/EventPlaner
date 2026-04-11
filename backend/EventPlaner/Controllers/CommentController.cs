@@ -1,10 +1,13 @@
 using EventPlaner.DT0s;
 using EventPlaner.Services;
+using EventPlaner.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventPlaner.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/events/{eventId}/comments")]
 public class CommentController : ControllerBase
 {
@@ -15,11 +18,10 @@ public class CommentController : ControllerBase
         _comments = comments;
     }
 
-    // Chat/comments are visible only for participants.
-    // Frontend passes current userId as query param (simple auth model used in this project).
     [HttpGet]
-    public IActionResult GetComments(int eventId, [FromQuery] int userId)
+    public IActionResult GetComments(int eventId)
     {
+        var userId = User.GetUserIdOrThrow();
         try
         {
             var comments = _comments.GetEventComments(eventId, userId);
@@ -37,8 +39,9 @@ public class CommentController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult CreateComment(int eventId, [FromQuery] int userId, [FromBody] CreateCommentDto dto)
+    public IActionResult CreateComment(int eventId, [FromBody] CreateCommentDto dto)
     {
+        var userId = User.GetUserIdOrThrow();
         try
         {
             var created = _comments.CreateComment(eventId, userId, dto?.Text ?? string.Empty);
@@ -55,8 +58,9 @@ public class CommentController : ControllerBase
     }
 
     [HttpDelete("{commentId}")]
-    public IActionResult DeleteComment(int eventId, int commentId, [FromQuery] int userId)
+    public IActionResult DeleteComment(int eventId, int commentId)
     {
+        var userId = User.GetUserIdOrThrow();
         try
         {
             var deleted = _comments.DeleteComment(eventId, commentId, userId);
@@ -73,4 +77,3 @@ public class CommentController : ControllerBase
         }
     }
 }
-

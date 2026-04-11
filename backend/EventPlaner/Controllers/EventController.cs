@@ -1,6 +1,8 @@
 using EventPlaner.DT0s;
 using EventPlaner.Models;
 using EventPlaner.Services;
+using EventPlaner.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventPlaner.Controllers;
@@ -17,13 +19,15 @@ public class EventController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult GetEvents()
+    [AllowAnonymous]
+    public IActionResult GetEvents([FromQuery] string? q)
     {
-        var events = _events.GetAllEvents();
+        var events = _events.GetAllEvents(q);
         return Ok(events);
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public IActionResult GetEvent(int id)
     {
         var ev = _events.GetAllEventById(id);
@@ -35,22 +39,26 @@ public class EventController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult CreateEvent(CreateEventDto dto)
+    [Authorize]
+    public IActionResult CreateEvent([FromBody] CreateEventDto dto)
     {
+        var ownerId = User.GetUserIdOrThrow();
         var ev = new Event
         {
             Title = dto.Title,
             Description = dto.Description,
             Location = dto.Location,
-            OwnerId = dto.OwnerId,
+            OwnerId = ownerId,
         };
         var created = _events.CreateEvent(ev);
         return Ok(created);
     }
 
     [HttpDelete("{id}")]
-    public IActionResult DeleteEvent(int id, [FromQuery] int userId)
+    [Authorize]
+    public IActionResult DeleteEvent(int id)
     {
+        var userId = User.GetUserIdOrThrow();
         try
         {
             var deleted = _events.DeleteEvent(id, userId);
@@ -67,25 +75,30 @@ public class EventController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public IActionResult UpdateEvent(int id, CreateEventDto ev)
+    [Authorize]
+    public IActionResult UpdateEvent(int id, [FromBody] UpdateEventDto ev)
     {
-        var updatedEvent = _events.UpdateEvent(id, new Event
+        var userId = User.GetUserIdOrThrow();
+        try
         {
-            Title = ev.Title,
-            Description = ev.Description,
-            Location = ev.Location,
-            OwnerId = ev.OwnerId,
-        });
-        if (updatedEvent == null)
-        {
-            return NotFound("Event not found");
+            var updatedEvent = _events.UpdateEvent(id, userId, ev);
+            if (updatedEvent == null)
+            {
+                return NotFound("Event not found");
+            }
+            return Ok(updatedEvent);
         }
-        return Ok(updatedEvent);
+        catch (UnauthorizedAccessException e)
+        {
+            return StatusCode(403, e.Message);
+        }
     }
 
     [HttpPost("{id}/join")]
-    public IActionResult JoinEvent(int id, [FromQuery] int userId)
+    [Authorize]
+    public IActionResult JoinEvent(int id)
     {
+        var userId = User.GetUserIdOrThrow();
         try
         {
             _events.JoinEvent(id, userId);
@@ -98,8 +111,10 @@ public class EventController : ControllerBase
     }
 
     [HttpPost("{id}/leave")]
-    public IActionResult LeaveEvent(int id, [FromQuery] int userId)
+    [Authorize]
+    public IActionResult LeaveEvent(int id)
     {
+        var userId = User.GetUserIdOrThrow();
         try
         {
             _events.LeaveEvent(id, userId);
@@ -112,6 +127,7 @@ public class EventController : ControllerBase
     }
 
     [HttpGet("{id}/participants")]
+    [AllowAnonymous]
     public IActionResult GetParticipants(int id)
     {
         var participants = _events.GetParticipants(id);

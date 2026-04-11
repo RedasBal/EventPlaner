@@ -44,8 +44,10 @@ const handleRegister = async () => {
       password: password.value,
     })
 
-    console.log('Registered user:', response.data)
-    router.push('/login')
+    // Backend returns { token, user } - store it so the user is logged in immediately.
+    localStorage.setItem('token', response.data?.token ?? '')
+    localStorage.setItem('user', JSON.stringify(response.data?.user ?? null))
+    router.push('/events')
   } catch (err) {
     const msg = err?.response?.data || err?.message || 'Registracija nepavyko. Bandyk dar kartą.'
     errorMessage.value = String(msg)
@@ -107,4 +109,3 @@ const handleRegister = async () => {
   color: var(--danger);
 }
 </style>
-

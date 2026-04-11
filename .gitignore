@@ -18,3 +18,7 @@ riderModule.iml
 # Visual Studio / .NET user-specific files
 *.user
 *.suo
+
+# Archives accidentally dropped into repo
+/backend/EventPlaner.zip
+/backend/EventPlaner (2).zip

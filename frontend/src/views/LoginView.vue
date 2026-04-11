@@ -37,9 +37,9 @@ const handleLogin = async () => {
       password: password.value,
     })
 
-    // Įsimenam prisijungusį vartotoją, kad vėliau galėtume automatiškai priskirti OwnerId.
-    // Backend grąžina user objektą (per UserMapper.Map(...)).
-    localStorage.setItem('user', JSON.stringify(response.data))
+    // Backend returns { token, user }
+    localStorage.setItem('token', response.data?.token ?? '')
+    localStorage.setItem('user', JSON.stringify(response.data?.user ?? null))
 
     router.push('/events')
   } catch (err) {
@@ -103,4 +103,3 @@ const handleLogin = async () => {
   color: var(--danger);
 }
 </style>
-

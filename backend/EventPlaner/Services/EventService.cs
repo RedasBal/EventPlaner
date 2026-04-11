@@ -13,12 +13,22 @@ public class EventService
       _db = db;
    }
 
-   public List<Event> GetAllEvents()
+   public List<Event> GetAllEvents(string? q)
    {
-      return _db.Events
+      var query = _db.Events
          .Include(e => e.Owner)
          .Include(e => e.Participants)
-         .ToList();
+         .AsQueryable();
+
+      if (!string.IsNullOrWhiteSpace(q))
+      {
+         var term = $"%{q.Trim()}%";
+         query = query.Where(e =>
+            EF.Functions.Like(e.Title, term) ||
+            EF.Functions.Like(e.Location, term));
+      }
+
+      return query.ToList();
    }
 
    public Event? GetAllEventById(int id)
@@ -82,22 +92,23 @@ public class EventService
       return true;
    }
 
-   public Event? UpdateEvent(int id, Event ev)
+   public Event? UpdateEvent(int id, int userId, UpdateEventDto dto)
    {
-      var existingEvent = _db.Events.FirstOrDefault(delegate(Event e)
-      {
-         return e.Id == id;
-      });
+      var existingEvent = _db.Events.FirstOrDefault(e => e.Id == id);
 
       if (existingEvent == null)
       {
          return null;
       }
 
-      existingEvent.Title = ev.Title;
-      existingEvent.Description = ev.Description;
-      existingEvent.Location = ev.Location;
-      existingEvent.OwnerId = ev.OwnerId;
+      if (existingEvent.OwnerId != userId)
+      {
+         throw new UnauthorizedAccessException("Only owner can update this event");
+      }
+
+      existingEvent.Title = dto.Title;
+      existingEvent.Description = dto.Description ?? string.Empty;
+      existingEvent.Location = dto.Location ?? string.Empty;
       _db.SaveChanges();
       return existingEvent;
    }
@@ -108,6 +119,12 @@ public class EventService
       if(ev == null)
       {
          throw new Exception("Event not found");
+      }
+
+      var userExists = _db.Users.AsNoTracking().Any(u => u.Id == userId);
+      if (!userExists)
+      {
+         throw new Exception("User not found");
       }
 
       if (userId == ev.OwnerId)
@@ -127,6 +144,7 @@ public class EventService
       EventParticipant ep = new EventParticipant();
       ep.EventId = eventId;
       ep.UserId = userId;
+      ep.Status = ParticipantStatus.Going;
       _db.EventParticipants.Add(ep);
       _db.SaveChanges();
    }
@@ -139,7 +157,7 @@ public class EventService
       });
       if (participant == null)
       {
-         throw new Exception("Event not found");
+         throw new Exception("Not participating");
       }
       _db.EventParticipants.Remove(participant);
       _db.SaveChanges();

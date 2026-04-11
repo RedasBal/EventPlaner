@@ -1,6 +1,7 @@
 using EventPlaner.DT0s;
 using EventPlaner.Models;
 using EventPlaner.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventPlaner.Controllers;
@@ -10,13 +11,16 @@ namespace EventPlaner.Controllers;
 public class UserController : ControllerBase
 {
     private readonly UserService _users;
+    private readonly TokenService _tokens;
 
-    public UserController(UserService users)
+    public UserController(UserService users, TokenService tokens)
     {
         _users = users;
+        _tokens = tokens;
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     public IActionResult Login([FromBody] UserLoginDto request)
     {
         var password = !string.IsNullOrWhiteSpace(request?.Password)
@@ -35,10 +39,17 @@ public class UserController : ControllerBase
         {
             return Unauthorized("Neteisingi duomenys");
         }
-        return Ok(UserMapper.Map(user));
+
+        var token = _tokens.CreateToken(user);
+        return Ok(new AuthResponseDto
+        {
+            Token = token,
+            User = UserMapper.Map(user)
+        });
     }
 
     [HttpPost("register")]
+    [AllowAnonymous]
     public IActionResult Register([FromBody] UserRegisterDto request)
     {
         var password = !string.IsNullOrWhiteSpace(request?.Password)
@@ -59,7 +70,13 @@ public class UserController : ControllerBase
             return Unauthorized("Vartotojas toks jau yra");
 
         }
-        return Ok(UserMapper.Map(user));
+
+        var token = _tokens.CreateToken(user);
+        return Ok(new AuthResponseDto
+        {
+            Token = token,
+            User = UserMapper.Map(user)
+        });
     }
 
 }

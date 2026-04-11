@@ -129,6 +129,7 @@ onMounted(fetchEvents)
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .tableWrap {
@@ -211,4 +212,3 @@ onMounted(fetchEvents)
   color: var(--danger);
 }
 </style>
-

@@ -213,9 +213,7 @@ const fetchComments = async () => {
   commentsLoading.value = true
   commentsError.value = ''
   try {
-    const res = await api.get(`/api/events/${eventId.value}/comments`, {
-      params: { userId: currentUserId.value },
-    })
+    const res = await api.get(`/api/events/${eventId.value}/comments`)
     comments.value = Array.isArray(res.data) ? res.data : []
 
     requestAnimationFrame(() => {
@@ -237,11 +235,7 @@ const sendComment = async () => {
   sendLoading.value = true
   commentsError.value = ''
   try {
-    await api.post(
-      `/api/events/${eventId.value}/comments`,
-      { text },
-      { params: { userId: currentUserId.value } },
-    )
+    await api.post(`/api/events/${eventId.value}/comments`, { text })
     newComment.value = ''
     await fetchComments()
   } catch (err) {
@@ -264,9 +258,7 @@ const deleteComment = async (commentId) => {
   sendLoading.value = true
   commentsError.value = ''
   try {
-    await api.delete(`/api/events/${eventId.value}/comments/${commentId}`, {
-      params: { userId: currentUserId.value },
-    })
+    await api.delete(`/api/events/${eventId.value}/comments/${commentId}`)
     await fetchComments()
   } catch (err) {
     const msg = err?.response?.data || err?.message || 'Nepavyko istrinti komentaro.'
@@ -280,9 +272,7 @@ const joinEvent = async () => {
   if (!canJoin.value) return
   actionLoading.value = true
   try {
-    await api.post(`/api/events/${eventId.value}/join`, null, {
-      params: { userId: currentUserId.value },
-    })
+    await api.post(`/api/events/${eventId.value}/join`, null)
     await fetchEvent()
     await fetchComments()
   } catch (err) {
@@ -297,9 +287,7 @@ const leaveEvent = async () => {
   if (!canLeave.value) return
   actionLoading.value = true
   try {
-    await api.post(`/api/events/${eventId.value}/leave`, null, {
-      params: { userId: currentUserId.value },
-    })
+    await api.post(`/api/events/${eventId.value}/leave`, null)
     await fetchEvent()
     comments.value = []
   } catch (err) {
@@ -315,9 +303,7 @@ const deleteEvent = async () => {
   if (!confirm('Tikrai istrinti rengini?')) return
   actionLoading.value = true
   try {
-    await api.delete(`/api/events/${eventId.value}`, {
-      params: { userId: currentUserId.value },
-    })
+    await api.delete(`/api/events/${eventId.value}`)
     router.push('/events')
   } catch (err) {
     const msg = err?.response?.data || err?.message || 'Nepavyko istrinti renginio.'

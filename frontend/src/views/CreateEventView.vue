@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/axios.js'
 
@@ -48,20 +48,10 @@ const location = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
 
-const currentUser = ref(null)
-const ownerId = computed(() => currentUser.value?.id ?? null)
-
 onMounted(() => {
-  try {
-    const raw = localStorage.getItem('user')
-    currentUser.value = raw ? JSON.parse(raw) : null
-  } catch {
-    currentUser.value = null
-  }
-
-  if (!ownerId.value) {
+  const token = localStorage.getItem('token')
+  if (!token) {
     errorMessage.value = 'Norint sukurti renginį, reikia prisijungti.'
-    // Paliekam puslapį, bet logiškiau nukreipti į login.
     router.push('/login')
   }
 })
@@ -69,7 +59,8 @@ onMounted(() => {
 const handleCreate = async () => {
   errorMessage.value = ''
 
-  if (!ownerId.value) {
+  const token = localStorage.getItem('token')
+  if (!token) {
     errorMessage.value = 'Prisijunkite ir bandykite dar kartą.'
     router.push('/login')
     return
@@ -84,7 +75,6 @@ const handleCreate = async () => {
       title: title.value.trim(),
       description: description.value.trim(),
       location: location.value.trim(),
-      ownerId: ownerId.value,
     })
 
     router.push(`/events/${res.data?.id ?? ''}`)
@@ -169,4 +159,3 @@ const handleCreate = async () => {
   color: var(--danger);
 }
 </style>
-
