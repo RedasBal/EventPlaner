@@ -1,0 +1,37 @@
+@EventPlaner_HostAddress = http://localhost:5170
+
+### Events
+GET {{EventPlaner_HostAddress}}/api/events
+Accept: application/json
+
+###
+
+### Event details
+GET {{EventPlaner_HostAddress}}/api/events/1
+Accept: application/json
+
+###
+
+### Join event (needs existing userId)
+POST {{EventPlaner_HostAddress}}/api/events/1/join?userId=1
+
+###
+
+### Leave event
+POST {{EventPlaner_HostAddress}}/api/events/1/leave?userId=1
+
+###
+
+### Event comments (only participants/owner)
+GET {{EventPlaner_HostAddress}}/api/events/1/comments?userId=1
+Accept: application/json
+
+###
+
+### Create comment
+POST {{EventPlaner_HostAddress}}/api/events/1/comments?userId=1
+Content-Type: application/json
+
+{
+  "text": "Sveiki, kada pradedam?"
+}

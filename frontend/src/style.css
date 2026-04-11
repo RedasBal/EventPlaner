@@ -1,0 +1,112 @@
+:root {
+  /* Theme: dark violet background + pink outlines */
+  --bg: #120018;
+  --bg-2: #1b0530;
+  --surface: rgba(27, 10, 46, 0.72);
+  --surface-2: rgba(49, 14, 78, 0.72);
+
+  --text: rgba(244, 230, 255, 0.84);
+  --text-h: #fbf5ff;
+
+  --outline: #ff4fd8;
+  --outline-soft: rgba(255, 79, 216, 0.35);
+  --danger: #ff4d7d;
+
+  /* Backwards-compatible vars used in components */
+  --border: var(--outline-soft);
+  --accent: var(--outline);
+  --accent-bg: rgba(255, 79, 216, 0.14);
+  --accent-border: rgba(255, 79, 216, 0.55);
+  --social-bg: rgba(255, 255, 255, 0.06);
+
+  --shadow:
+    rgba(0, 0, 0, 0.45) 0 18px 40px -16px,
+    rgba(255, 79, 216, 0.12) 0 0 0 1px inset;
+
+  --sans: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --heading: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 16px/1.45 var(--sans);
+  letter-spacing: 0.2px;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(900px 600px at 18% 12%, rgba(255, 79, 216, 0.18), transparent 55%),
+    radial-gradient(900px 600px at 84% 22%, rgba(128, 63, 255, 0.22), transparent 60%),
+    radial-gradient(1100px 700px at 50% 92%, rgba(255, 79, 216, 0.12), transparent 55%),
+    linear-gradient(180deg, var(--bg), var(--bg-2));
+  color: var(--text);
+}
+
+#app {
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--heading);
+  font-weight: 650;
+  color: var(--text-h);
+  margin: 0 0 10px;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--outline);
+}
+
+input,
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--outline-soft);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text-h);
+  transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(244, 230, 255, 0.55);
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--outline);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--outline) 35%, transparent),
+    0 0 0 1px rgba(0, 0, 0, 0.2) inset;
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+code {
+  font-family: var(--mono);
+  border-radius: 8px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 79, 216, 0.18);
+  color: var(--text-h);
+}
+

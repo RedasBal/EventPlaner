@@ -3,3 +3,22 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+.idea/
+**/.idea/
+
+# Local databases (do not commit)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3
+
+# Visual Studio / .NET user-specific files
+*.user
+*.suo
+
+# Archives accidentally dropped into repo
+/backend/EventPlaner.zip
+/backend/EventPlaner (2).zip
